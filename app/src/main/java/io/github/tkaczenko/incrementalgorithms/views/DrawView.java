@@ -24,8 +24,7 @@ public class DrawView extends View {
     private static final double DEFAULT_MAX_Y = 10.0;
 
     private int mBackgroundColor = Color.WHITE;
-    private int mLetterColor = Color.BLUE;
-    private int mNumberColor = Color.RED;
+    private int mDrawColor = Color.BLUE;
     private float mWidth = 2.0F;
 
     private Character mLetter = new Character();
@@ -66,13 +65,14 @@ public class DrawView extends View {
     private void fillBackground(Canvas canvas) {
         canvas.drawColor(mBackgroundColor);
     }
+
     private void initScreenConverter(Canvas canvas) {
         mScreenConverter.setWidth(canvas.getWidth());
         mScreenConverter.setHeight(canvas.getHeight());
     }
 
     private void initLetter() {
-        mPaint.setColor(mLetterColor);
+        mPaint.setColor(mDrawColor);
         mPaint.setStrokeWidth(mWidth);
 
         List<Point<Double>> points = new ArrayList<>();
@@ -114,7 +114,7 @@ public class DrawView extends View {
     }
 
     private void initNumber() {
-        mPaint.setColor(mNumberColor);
+        mPaint.setColor(mDrawColor);
         mPaint.setStrokeWidth(mWidth);
 
         List<Point<Double>> points = new ArrayList<>();
@@ -158,6 +158,10 @@ public class DrawView extends View {
         mNumber.setPoints(points);
         mNumber.setOrders(orders);
         mNumber.setScreenConverter(mScreenConverter);
+    }
+
+    public void setDrawColor(int drawColor) {
+        this.mDrawColor = drawColor;
     }
 
     public double getMinX() {
