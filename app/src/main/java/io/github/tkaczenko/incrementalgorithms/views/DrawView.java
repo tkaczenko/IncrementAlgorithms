@@ -79,9 +79,9 @@ public class DrawView extends View {
 
         // Real letters' coordinates of basic vertexes
         points.add(new Point<>(3.0, 0.0));
-        points.add(new Point<>(1.0, 1.0));
+        points.add(new Point<>(1.0, 0.0));
         points.add(new Point<>(6.5, 10.0));
-        points.add(new Point<>(12.0, 1.0));
+        points.add(new Point<>(12.0, 0.0));
         points.add(new Point<>(10.0, 0.0));
         points.add(new Point<>(9.0, 2.0));
         points.add(new Point<>(4.0, 2.0));
@@ -125,6 +125,9 @@ public class DrawView extends View {
         points.add(new Point<>(13.0, 9.0));
         points.add(new Point<>(14.0, 10.0));
         points.add(new Point<>(18.0, 10.0));
+        points.add(new Point<>(19.0, 9.0));
+        points.add(new Point<>(19.0, 8.0));
+        points.add(new Point<>(18.5, 8.0));
         points.add(new Point<>(18.0, 9.0));
         points.add(new Point<>(15.0, 9.0));
         points.add(new Point<>(14.0, 8.0));
@@ -134,6 +137,14 @@ public class DrawView extends View {
         points.add(new Point<>(19.0, 5.0));
         points.add(new Point<>(19.0, 1.0));
         points.add(new Point<>(17.0, 0.0));
+        points.add(new Point<>(15.0, 1.0));
+        points.add(new Point<>(14.0, 2.0));
+        points.add(new Point<>(14.0, 4.0));
+        points.add(new Point<>(15.0, 5.0));
+        points.add(new Point<>(17.0, 5.0));
+        points.add(new Point<>(18.0, 4.0));
+        points.add(new Point<>(18.0, 2.0));
+        points.add(new Point<>(17.0, 1.0));
 
         // Adjacency matrix for vertexes
         int size = points.size();
@@ -144,17 +155,25 @@ public class DrawView extends View {
             }
         }
         int j = 1;
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size - 8; i++) {
             if (j == size) {
                 break;
             }
             orders[i][j] = 1;
             j++;
         }
-        orders[0][size - 1] = 1;
+        j = size - 7;
+        for (int i = size - 8; i < size; i++) {
+            if (j == size) {
+                break;
+            }
+            orders[i][j] = 1;
+            j++;
+        }
+        orders[size - 9][size - 8] = 0;
+        orders[0][size - 9] = 1;
+        orders[size - 8][size - 1] = 1;
 
-
-        mNumber.setHaveCircle(true);
         mNumber.setPoints(points);
         mNumber.setOrders(orders);
         mNumber.setScreenConverter(mScreenConverter);

@@ -15,7 +15,6 @@ import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
 public class Character {
     private static final String TAG = Character.class.getSimpleName();
 
-    private boolean haveCircle = false;
     private List<Point<Double>> mPoints;
     private int[][] mOrders;
 
@@ -25,10 +24,6 @@ public class Character {
         if (mScreenConverter == null) {
             Log.e(TAG, "ScreenConverter cannot be null");
             return;
-        }
-        if (haveCircle) {
-            Algorithm.drawCircle(mScreenConverter.toScreenX(16.0), mScreenConverter.toScreenY(3.0),
-                    mScreenConverter.toScreenX(3.2), canvas, paint);
         }
         Point<Double> startPoint, stopPoint;
         for (int i = 0; i < mOrders.length; i++) {
@@ -71,9 +66,5 @@ public class Character {
 
     public void setScreenConverter(ScreenConverter screenConverter) {
         this.mScreenConverter = screenConverter;
-    }
-
-    public void setHaveCircle(boolean haveCircle) {
-        this.haveCircle = haveCircle;
     }
 }
