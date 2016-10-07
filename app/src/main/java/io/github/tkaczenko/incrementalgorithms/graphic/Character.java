@@ -48,6 +48,50 @@ public class Character {
         }
     }
 
+    public double getMinX() {
+        double minX = mPoints.get(0).getX();
+        for (Point<Double> point :
+                mPoints) {
+            if (point.getX() < minX) {
+                minX = point.getX();
+            }
+        }
+        return minX;
+    }
+
+    public double getMaxX() {
+        double maxX = mPoints.get(0).getX();
+        for (Point<Double> point :
+                mPoints) {
+            if (point.getX() > maxX) {
+                maxX = point.getX();
+            }
+        }
+        return maxX;
+    }
+
+    public double getMinY() {
+        double minY = mPoints.get(0).getY();
+        for (Point<Double> point :
+                mPoints) {
+            if (point.getY() < minY) {
+                minY = point.getY();
+            }
+        }
+        return minY;
+    }
+
+    public double getMaxY() {
+        double maxY = mPoints.get(0).getY();
+        for (Point<Double> point :
+                mPoints) {
+            if (point.getY() > maxY) {
+                maxY = point.getY();
+            }
+        }
+        return maxY;
+    }
+
     public List<Point<Double>> getPoints() {
         return mPoints;
     }

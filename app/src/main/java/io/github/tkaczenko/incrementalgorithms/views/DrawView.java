@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -17,12 +18,20 @@ import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
 /**
  * Created by tkaczenko on 23.09.16.
  */
-public class DrawView extends View {
+public class DrawView extends View implements View.OnTouchListener {
     private static final double DEFAULT_MIN_X = -49.1;
     private static final double DEFAULT_MAX_X = 49.1;
     private static final double DEFAULT_MIN_Y = -40.1;
     private static final double DEFAULT_MAX_Y = 40.0;
 
+    private double minX;
+    private double maxX;
+    private double minY;
+    private double maxY;
+
+    private double prevX;
+    private double prevY;
+    private boolean isMovebale = false;
     private int mBackgroundColor = Color.WHITE;
     private int mDrawColor = Color.BLUE;
     private float mWidth = 2.0F;
@@ -35,32 +44,117 @@ public class DrawView extends View {
 
     public DrawView(Context context) {
         super(context);
+        setOnTouchListener(this);
+        initialize();
     }
 
     public DrawView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        setOnTouchListener(this);
+        initialize();
     }
 
     public DrawView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        setOnTouchListener(this);
+        initialize();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        fillBackground(canvas);
+        initScreenConverter(canvas);
+        mPaint.setColor(mDrawColor);
+        mPaint.setStrokeWidth(mWidth);
+        mLetter.draw(canvas, mPaint);
+        mNumber.draw(canvas, mPaint);
+    }
+
+    private void initialize() {
         setMinX(DEFAULT_MIN_X);
         setMaxX(DEFAULT_MAX_X);
         setMinY(DEFAULT_MIN_Y);
         setMaxY(DEFAULT_MAX_Y);
 
-        fillBackground(canvas);
-        initScreenConverter(canvas);
         initLetter();
-        mLetter.draw(canvas, mPaint);
         initNumber();
-        mNumber.draw(canvas, mPaint);
     }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        double x = mScreenConverter.toWorldX((int) event.getX());
+        double y = mScreenConverter.toWorldY((int) event.getY());
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                searchMinMaxOfAxises();
+                if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                    isMovebale = true;
+                    prevX = x;
+                    prevY = y;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (isMovebale == true) {
+                    //// TODO: 07.10.16 Implement transformation
+                    List<Point<Double>> letterPoints = new ArrayList<>();
+                    List<Point<Double>> numberPoints = new ArrayList<>();
+                    searchMinMaxOfAxises();
+                    double deltaX = x - prevX;
+                    double deltaY = y - prevY;
+                    if (mScreenConverter.toScreenX(minX + deltaX) > 0
+                            && mScreenConverter.toScreenX(maxX + deltaX) <
+                            mScreenConverter.getWidth()
+                            && mScreenConverter.toScreenY(maxY + deltaY) > 0
+                            && mScreenConverter.toScreenY(minY + deltaY) <
+                            mScreenConverter.getHeight()
+                            ) {
+                        for (Point<Double> point :
+                                mLetter.getPoints()) {
+                            letterPoints.add(new Point<>(
+                                    point.getX() + deltaX, point.getY() + deltaY));
+                        }
+                        for (Point<Double> point :
+                                mNumber.getPoints()) {
+                            numberPoints.add(new Point<>(
+                                    point.getX() + deltaX, point.getY() + deltaY));
+                        }
+                        mLetter.setPoints(letterPoints);
+                        mNumber.setPoints(numberPoints);
+                        prevX = x;
+                        prevY = y;
+                        invalidate();
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                isMovebale = false;
+                break;
+        }
+        return true;
+    }
+
+    private void searchMinMaxOfAxises() {
+        double a = mLetter.getMinX();
+        double b = mNumber.getMinX();
+        minX = Math.min(a, b);
+
+        a = mLetter.getMaxX();
+        b = mNumber.getMaxX();
+        maxX = Math.max(a, b);
+
+        a = mLetter.getMinY();
+        b = mNumber.getMinX();
+        minY = Math.min(a, b);
+
+        a = mLetter.getMaxY();
+        b = mNumber.getMaxY();
+        maxY = Math.max(a, b);
+    }
+
+    ;
 
     private void fillBackground(Canvas canvas) {
         canvas.drawColor(mBackgroundColor);
@@ -72,9 +166,6 @@ public class DrawView extends View {
     }
 
     private void initLetter() {
-        mPaint.setColor(mDrawColor);
-        mPaint.setStrokeWidth(mWidth);
-
         List<Point<Double>> points = new ArrayList<>();
 
         // Real letters' coordinates of basic vertexes
@@ -114,9 +205,6 @@ public class DrawView extends View {
     }
 
     private void initNumber() {
-        mPaint.setColor(mDrawColor);
-        mPaint.setStrokeWidth(mWidth);
-
         List<Point<Double>> points = new ArrayList<>();
 
         // Real number's coordinates of basic vertexes
