@@ -11,15 +11,5 @@
     <io.github.tkaczenko.incrementalgorithms.views.DrawView
         android:id="@+id/draw_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/edit_button" />
-
-    <Button
-        android:id="@+id/edit_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerInParent="true"
-        android:onClick="onClick"
-        android:text="Edit color" />
+        android:layout_height="match_parent" />
 </RelativeLayout>

@@ -18,10 +18,10 @@ import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
  * Created by tkaczenko on 23.09.16.
  */
 public class DrawView extends View {
-    private static final double DEFAULT_MIN_X = 1.0;
-    private static final double DEFAULT_MAX_X = 19.1;
-    private static final double DEFAULT_MIN_Y = -0.1;
-    private static final double DEFAULT_MAX_Y = 10.0;
+    private static final double DEFAULT_MIN_X = -49.1;
+    private static final double DEFAULT_MAX_X = 49.1;
+    private static final double DEFAULT_MIN_Y = -40.1;
+    private static final double DEFAULT_MAX_Y = 40.0;
 
     private int mBackgroundColor = Color.WHITE;
     private int mDrawColor = Color.BLUE;
