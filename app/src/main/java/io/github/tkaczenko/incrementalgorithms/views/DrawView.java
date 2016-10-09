@@ -6,19 +6,17 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import io.github.tkaczenko.incrementalgorithms.enumerations.Mode;
 import io.github.tkaczenko.incrementalgorithms.graphic.Character;
 import io.github.tkaczenko.incrementalgorithms.graphic.Point;
 import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Scale;
-import io.github.tkaczenko.incrementalgorithms.math.transformations.Transformation;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Translate;
 
 /**
@@ -35,23 +33,20 @@ public class DrawView extends View implements View.OnTouchListener {
     private double minY;
     private double maxY;
 
-    private double prevDist;
     private Mode mode = Mode.NONE;
 
-    // remember some things for zooming
+    private ScaleGestureDetector mScaleDetector;
     private Point<Double> start;
-    private Point<Double> mid;
 
-    private double[] lastEvent = null;
     private int mBackgroundColor = Color.WHITE;
     private int mDrawColor = Color.BLUE;
     private float mWidth = 2.0F;
 
-    private Translate mTranslate = new Translate();
-    private Scale mScale = new Scale();
-
     private Character mLetter = new Character();
     private Character mNumber = new Character();
+
+    private Translate mTranslate = new Translate();
+    private Scale mScale = new Scale();
 
     private ScreenConverter mScreenConverter = new ScreenConverter();
     private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -59,18 +54,21 @@ public class DrawView extends View implements View.OnTouchListener {
     public DrawView(Context context) {
         super(context);
         setOnTouchListener(this);
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
         initialize();
     }
 
     public DrawView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setOnTouchListener(this);
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
         initialize();
     }
 
     public DrawView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         setOnTouchListener(this);
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
         initialize();
     }
 
@@ -86,16 +84,6 @@ public class DrawView extends View implements View.OnTouchListener {
         mNumber.draw(canvas, mPaint);
     }
 
-    private void initialize() {
-        setMinX(DEFAULT_MIN_X);
-        setMaxX(DEFAULT_MAX_X);
-        setMinY(DEFAULT_MIN_Y);
-        setMaxY(DEFAULT_MAX_Y);
-
-        initLetter();
-        initNumber();
-    }
-
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         double x = mScreenConverter.toWorldX((int) event.getX());
@@ -109,22 +97,12 @@ public class DrawView extends View implements View.OnTouchListener {
                     start = new Point<>(x, y);
                 }
                 break;
-            case MotionEvent.ACTION_POINTER_DOWN:
-                prevDist = spacing(event);
-                midPoint(mid, event);
-                mode = Mode.ZOOM;
             case MotionEvent.ACTION_MOVE:
                 if (mode.equals(Mode.DRAG)) {
                     searchMinMaxOfAxises();
                     double deltaX = x - start.getX();
                     double deltaY = y - start.getY();
-                    if (mScreenConverter.toScreenX(minX + deltaX) > 0
-                            && mScreenConverter.toScreenX(maxX + deltaX) <
-                            mScreenConverter.getWidth()
-                            && mScreenConverter.toScreenY(maxY + deltaY) > 0
-                            && mScreenConverter.toScreenY(minY + deltaY) <
-                            mScreenConverter.getHeight()
-                            ) {
+                    if (isFitToScreen(deltaX, deltaY, true)) {
                         mTranslate.setTranslationX(deltaX);
                         mTranslate.setTranslationY(deltaY);
                         mLetter.getTransformations().add(mTranslate);
@@ -134,46 +112,67 @@ public class DrawView extends View implements View.OnTouchListener {
                         start.setY(y);
                         invalidate();
                     }
-                } else if (mode.equals(Mode.ZOOM)) {
-                    double newDist = spacing(event);
-                    if (newDist > 10D) {
-                        double scale = (newDist / prevDist);
-                        mScale.setScaleByX(mid.getX());
-                        mScale.setScaleByY(mid.getY());
-                        mLetter.getTransformations().add(mScale);
-                        mNumber.getTransformations().add(mScale);
-                        invalidate();
-                    }
-                    if (lastEvent != null && event.getPointerCount() == 3) {
-                        // TODO: 09.10.16 Implement rotation
-                    }
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 mode = Mode.NONE;
                 break;
-            case MotionEvent.ACTION_POINTER_UP:
-                mode = Mode.NONE;
-                lastEvent = null;
-                break;
         }
+        mScaleDetector.onTouchEvent(event);
         return true;
     }
 
-    private double spacing(MotionEvent event) {
-        double x = mScreenConverter.toWorldX((int) event.getX(0))
-                - mScreenConverter.toWorldX((int) event.getX(1));
-        double y = mScreenConverter.toWorldY((int) event.getY(0))
-                - mScreenConverter.toWorldY((int) event.getY(1));
-        return Math.sqrt(x * x + y * y);
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        private double lastSpanX;
+        private double lastSpanY;
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            lastSpanX = detector.getCurrentSpanX();
+            lastSpanY = detector.getCurrentSpanY();
+
+            return true;
+        }
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            double spanX = detector.getCurrentSpanX();
+            double spanY = detector.getCurrentSpanY();
+
+            double newWidth = lastSpanX / spanX;
+            double newHeight = lastSpanY / spanY;
+
+            searchMinMaxOfAxises();
+
+            if (isFitToScreen(newWidth, newHeight, false)) {
+                mScale.setScaleByX(newWidth);
+                mScale.setScaleByY(newHeight);
+
+                mLetter.getTransformations().add(mScale);
+                mNumber.getTransformations().add(mScale);
+
+                lastSpanX = spanX;
+                lastSpanY = spanY;
+                invalidate();
+            }
+            return true;
+        }
+
     }
 
-    private void midPoint(Point<Double> point, MotionEvent event) {
-        double x = mScreenConverter.toWorldX((int) event.getX(0))
-                + mScreenConverter.toWorldX((int) event.getX(1));
-        double y = mScreenConverter.toWorldY((int) event.getY(0))
-                + mScreenConverter.toWorldY((int) event.getY(1));
-        point = new Point<>(x / 2, y / 2);
+    private boolean isFitToScreen(double deltaX, double deltaY, boolean translate) {
+        return (translate) ? mScreenConverter.toScreenX(minX + deltaX) > 0
+                && mScreenConverter.toScreenX(maxX + deltaX) <
+                mScreenConverter.getWidth()
+                && mScreenConverter.toScreenY(maxY + deltaY) > 0
+                && mScreenConverter.toScreenY(minY + deltaY) <
+                mScreenConverter.getHeight()
+                : mScreenConverter.toScreenX(minX * deltaX) > 0
+                && mScreenConverter.toScreenX(maxX * deltaX) <
+                mScreenConverter.getWidth()
+                && mScreenConverter.toScreenY(maxY * deltaY) > 0
+                && mScreenConverter.toScreenY(minY * deltaY) <
+                mScreenConverter.getHeight();
     }
 
     private void searchMinMaxOfAxises() {
@@ -193,8 +192,6 @@ public class DrawView extends View implements View.OnTouchListener {
         b = mNumber.getMaxY();
         maxY = Math.max(a, b);
     }
-
-    ;
 
     private void fillBackground(Canvas canvas) {
         canvas.drawColor(mBackgroundColor);
@@ -305,6 +302,16 @@ public class DrawView extends View implements View.OnTouchListener {
         mNumber.setPoints(points);
         mNumber.setOrders(orders);
         mNumber.setScreenConverter(mScreenConverter);
+    }
+
+    private void initialize() {
+        setMinX(DEFAULT_MIN_X);
+        setMaxX(DEFAULT_MAX_X);
+        setMinY(DEFAULT_MIN_Y);
+        setMaxY(DEFAULT_MAX_Y);
+
+        initLetter();
+        initNumber();
     }
 
     public void setDrawColor(int drawColor) {

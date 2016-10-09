@@ -20,6 +20,7 @@ public class Character {
 
     private List<Point<Double>> mPoints;
     private Set<Transformation> mTransformations = new LinkedHashSet<>();
+
     private int[][] mOrders;
 
     private ScreenConverter mScreenConverter;
@@ -51,6 +52,7 @@ public class Character {
                 }
             }
         }
+        mTransformations.clear();
     }
 
     private void transform() {
