@@ -5,5 +5,5 @@ package io.github.tkaczenko.incrementalgorithms.enumerations;
  */
 
 public enum Mode {
-    NONE, DRAG, ZOOM
+    NONE, DRAG, ZOOM, ROTATE
 }

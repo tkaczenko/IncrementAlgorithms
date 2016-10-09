@@ -17,6 +17,7 @@ import io.github.tkaczenko.incrementalgorithms.enumerations.Mode;
 import io.github.tkaczenko.incrementalgorithms.graphic.Character;
 import io.github.tkaczenko.incrementalgorithms.graphic.Point;
 import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Scale;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Transformation;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Translate;
 
@@ -34,24 +35,20 @@ public class DrawView extends View implements View.OnTouchListener {
     private double minY;
     private double maxY;
 
-    private double prevX;
-    private double prevY;
     private double prevDist;
     private Mode mode = Mode.NONE;
 
     // remember some things for zooming
     private Point<Double> start;
     private Point<Double> mid;
-    private float d = 0F;
-    private double newRot = 0D;
 
     private double[] lastEvent = null;
     private int mBackgroundColor = Color.WHITE;
     private int mDrawColor = Color.BLUE;
     private float mWidth = 2.0F;
 
-    private Set<Transformation> transformations = new LinkedHashSet<>();
     private Translate mTranslate = new Translate();
+    private Scale mScale = new Scale();
 
     private Character mLetter = new Character();
     private Character mNumber = new Character();
@@ -109,28 +106,18 @@ public class DrawView extends View implements View.OnTouchListener {
                 searchMinMaxOfAxises();
                 if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
                     mode = Mode.DRAG;
-                    lastEvent = null;
-                    prevX = x;
-                    prevY = y;
+                    start = new Point<>(x, y);
                 }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 prevDist = spacing(event);
-                if (prevDist > 10f) {
-                    midPoint(mid, event);
-                    mode = Mode.ZOOM;
-                }
-                lastEvent = new double[4];
-                lastEvent[0] = mScreenConverter.toWorldX((int) event.getX(0));
-                lastEvent[1] = mScreenConverter.toWorldX((int) event.getX(1));
-                lastEvent[2] = mScreenConverter.toWorldY((int) event.getY(0));
-                lastEvent[3] = mScreenConverter.toWorldY((int) event.getY(1));
-                d = rotation(event);
+                midPoint(mid, event);
+                mode = Mode.ZOOM;
             case MotionEvent.ACTION_MOVE:
                 if (mode.equals(Mode.DRAG)) {
                     searchMinMaxOfAxises();
-                    double deltaX = x - prevX;
-                    double deltaY = y - prevY;
+                    double deltaX = x - start.getX();
+                    double deltaY = y - start.getY();
                     if (mScreenConverter.toScreenX(minX + deltaX) > 0
                             && mScreenConverter.toScreenX(maxX + deltaX) <
                             mScreenConverter.getWidth()
@@ -143,22 +130,21 @@ public class DrawView extends View implements View.OnTouchListener {
                         mLetter.getTransformations().add(mTranslate);
                         mNumber.getTransformations().add(mTranslate);
 
-                        prevX = x;
-                        prevY = y;
+                        start.setX(x);
+                        start.setY(y);
                         invalidate();
                     }
                 } else if (mode.equals(Mode.ZOOM)) {
                     double newDist = spacing(event);
-                    if (newDist > 10F) {
+                    if (newDist > 10D) {
                         double scale = (newDist / prevDist);
-                        System.out.println("SCALE");
-
-                        //// TODO: 09.10.16 Implement scaling
+                        mScale.setScaleByX(mid.getX());
+                        mScale.setScaleByY(mid.getY());
+                        mLetter.getTransformations().add(mScale);
+                        mNumber.getTransformations().add(mScale);
+                        invalidate();
                     }
                     if (lastEvent != null && event.getPointerCount() == 3) {
-                        newRot = rotation(event);
-                        double r = newRot - d;
-                        System.out.println("ROTATE");
                         // TODO: 09.10.16 Implement rotation
                     }
                 }
@@ -180,13 +166,6 @@ public class DrawView extends View implements View.OnTouchListener {
         double y = mScreenConverter.toWorldY((int) event.getY(0))
                 - mScreenConverter.toWorldY((int) event.getY(1));
         return Math.sqrt(x * x + y * y);
-    }
-
-    private float rotation(MotionEvent event) {
-        double delta_x = (event.getX(0) - event.getX(1));
-        double delta_y = (event.getY(0) - event.getY(1));
-        double radians = Math.atan2(delta_y, delta_x);
-        return (float) Math.toDegrees(radians);
     }
 
     private void midPoint(Point<Double> point, MotionEvent event) {
