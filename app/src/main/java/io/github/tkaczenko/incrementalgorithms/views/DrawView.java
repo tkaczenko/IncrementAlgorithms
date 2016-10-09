@@ -9,11 +9,16 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
+import io.github.tkaczenko.incrementalgorithms.enumerations.Mode;
 import io.github.tkaczenko.incrementalgorithms.graphic.Character;
 import io.github.tkaczenko.incrementalgorithms.graphic.Point;
 import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Transformation;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Translate;
 
 /**
  * Created by tkaczenko on 23.09.16.
@@ -31,10 +36,22 @@ public class DrawView extends View implements View.OnTouchListener {
 
     private double prevX;
     private double prevY;
-    private boolean isMovebale = false;
+    private double prevDist;
+    private Mode mode = Mode.NONE;
+
+    // remember some things for zooming
+    private Point<Double> start;
+    private Point<Double> mid;
+    private float d = 0F;
+    private double newRot = 0D;
+
+    private double[] lastEvent = null;
     private int mBackgroundColor = Color.WHITE;
     private int mDrawColor = Color.BLUE;
     private float mWidth = 2.0F;
+
+    private Set<Transformation> transformations = new LinkedHashSet<>();
+    private Translate mTranslate = new Translate();
 
     private Character mLetter = new Character();
     private Character mNumber = new Character();
@@ -91,16 +108,26 @@ public class DrawView extends View implements View.OnTouchListener {
             case MotionEvent.ACTION_DOWN:
                 searchMinMaxOfAxises();
                 if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-                    isMovebale = true;
+                    mode = Mode.DRAG;
+                    lastEvent = null;
                     prevX = x;
                     prevY = y;
                 }
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                prevDist = spacing(event);
+                if (prevDist > 10f) {
+                    midPoint(mid, event);
+                    mode = Mode.ZOOM;
+                }
+                lastEvent = new double[4];
+                lastEvent[0] = mScreenConverter.toWorldX((int) event.getX(0));
+                lastEvent[1] = mScreenConverter.toWorldX((int) event.getX(1));
+                lastEvent[2] = mScreenConverter.toWorldY((int) event.getY(0));
+                lastEvent[3] = mScreenConverter.toWorldY((int) event.getY(1));
+                d = rotation(event);
             case MotionEvent.ACTION_MOVE:
-                if (isMovebale == true) {
-                    //// TODO: 07.10.16 Implement transformation
-                    List<Point<Double>> letterPoints = new ArrayList<>();
-                    List<Point<Double>> numberPoints = new ArrayList<>();
+                if (mode.equals(Mode.DRAG)) {
                     searchMinMaxOfAxises();
                     double deltaX = x - prevX;
                     double deltaY = y - prevY;
@@ -111,29 +138,63 @@ public class DrawView extends View implements View.OnTouchListener {
                             && mScreenConverter.toScreenY(minY + deltaY) <
                             mScreenConverter.getHeight()
                             ) {
-                        for (Point<Double> point :
-                                mLetter.getPoints()) {
-                            letterPoints.add(new Point<>(
-                                    point.getX() + deltaX, point.getY() + deltaY));
-                        }
-                        for (Point<Double> point :
-                                mNumber.getPoints()) {
-                            numberPoints.add(new Point<>(
-                                    point.getX() + deltaX, point.getY() + deltaY));
-                        }
-                        mLetter.setPoints(letterPoints);
-                        mNumber.setPoints(numberPoints);
+                        mTranslate.setTranslationX(deltaX);
+                        mTranslate.setTranslationY(deltaY);
+                        mLetter.getTransformations().add(mTranslate);
+                        mNumber.getTransformations().add(mTranslate);
+
                         prevX = x;
                         prevY = y;
                         invalidate();
                     }
+                } else if (mode.equals(Mode.ZOOM)) {
+                    double newDist = spacing(event);
+                    if (newDist > 10F) {
+                        double scale = (newDist / prevDist);
+                        System.out.println("SCALE");
+
+                        //// TODO: 09.10.16 Implement scaling
+                    }
+                    if (lastEvent != null && event.getPointerCount() == 3) {
+                        newRot = rotation(event);
+                        double r = newRot - d;
+                        System.out.println("ROTATE");
+                        // TODO: 09.10.16 Implement rotation
+                    }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                isMovebale = false;
+                mode = Mode.NONE;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mode = Mode.NONE;
+                lastEvent = null;
                 break;
         }
         return true;
+    }
+
+    private double spacing(MotionEvent event) {
+        double x = mScreenConverter.toWorldX((int) event.getX(0))
+                - mScreenConverter.toWorldX((int) event.getX(1));
+        double y = mScreenConverter.toWorldY((int) event.getY(0))
+                - mScreenConverter.toWorldY((int) event.getY(1));
+        return Math.sqrt(x * x + y * y);
+    }
+
+    private float rotation(MotionEvent event) {
+        double delta_x = (event.getX(0) - event.getX(1));
+        double delta_y = (event.getY(0) - event.getY(1));
+        double radians = Math.atan2(delta_y, delta_x);
+        return (float) Math.toDegrees(radians);
+    }
+
+    private void midPoint(Point<Double> point, MotionEvent event) {
+        double x = mScreenConverter.toWorldX((int) event.getX(0))
+                + mScreenConverter.toWorldX((int) event.getX(1));
+        double y = mScreenConverter.toWorldY((int) event.getY(0))
+                + mScreenConverter.toWorldY((int) event.getY(1));
+        point = new Point<>(x / 2, y / 2);
     }
 
     private void searchMinMaxOfAxises() {
@@ -302,5 +363,4 @@ public class DrawView extends View implements View.OnTouchListener {
     public void setMaxY(double maxY) {
         mScreenConverter.setMaxY(maxY);
     }
-
 }

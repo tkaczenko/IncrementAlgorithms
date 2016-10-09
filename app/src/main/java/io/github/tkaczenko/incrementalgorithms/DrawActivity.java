@@ -13,11 +13,14 @@ import com.flask.colorpicker.OnColorSelectedListener;
 import com.flask.colorpicker.builder.ColorPickerClickListener;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
+import io.github.tkaczenko.incrementalgorithms.graphic.Character;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Translate;
 import io.github.tkaczenko.incrementalgorithms.views.DrawView;
 
 public class DrawActivity extends AppCompatActivity {
     private DrawView drawView;
     private int mColor;
+   // private My1 my1 = new My1();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

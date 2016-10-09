@@ -19,4 +19,9 @@ public class Point<T> {
     public T getY() {
         return y;
     }
+
+    @Override
+    public String toString() {
+        return "Point: " + x + " " + y;
+    }
 }

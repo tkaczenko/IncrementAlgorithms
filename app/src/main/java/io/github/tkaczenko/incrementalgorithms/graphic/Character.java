@@ -4,10 +4,13 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.Log;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.github.tkaczenko.incrementalgorithms.math.Algorithm;
 import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Transformation;
 
 /**
  * Created by tkaczenko on 23.09.16.
@@ -16,6 +19,7 @@ public class Character {
     private static final String TAG = Character.class.getSimpleName();
 
     private List<Point<Double>> mPoints;
+    private Set<Transformation> mTransformations = new LinkedHashSet<>();
     private int[][] mOrders;
 
     private ScreenConverter mScreenConverter;
@@ -25,6 +29,7 @@ public class Character {
             Log.e(TAG, "ScreenConverter cannot be null");
             return;
         }
+        transform();
         Point<Double> startPoint, stopPoint;
         for (int i = 0; i < mOrders.length; i++) {
             for (int j = 0; j < mOrders[0].length; j++) {
@@ -46,6 +51,23 @@ public class Character {
                 }
             }
         }
+    }
+
+    private void transform() {
+        for (int i = 0; i < mPoints.size(); i++) {
+            mPoints.set(i, transform(mPoints.get(i)));
+        }
+    }
+
+    private Point<Double> transform(Point<Double> point) {
+        Point<Double> newPoint = point;
+        if (mTransformations == null) {
+            return newPoint;
+        }
+        for (Transformation transformation : mTransformations) {
+            newPoint = transformation.transform(newPoint);
+        }
+        return newPoint;
     }
 
     public double getMinX() {
@@ -94,6 +116,10 @@ public class Character {
 
     public List<Point<Double>> getPoints() {
         return mPoints;
+    }
+
+    public Set<Transformation> getTransformations() {
+        return mTransformations;
     }
 
     public void setPoints(List<Point<Double>> points) {
