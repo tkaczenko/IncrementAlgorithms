@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import io.github.tkaczenko.incrementalgorithms.enumerations.Mode;
 import io.github.tkaczenko.incrementalgorithms.graphic.Character;
 import io.github.tkaczenko.incrementalgorithms.graphic.Point;
 import io.github.tkaczenko.incrementalgorithms.math.ScreenConverter;
+import io.github.tkaczenko.incrementalgorithms.math.transformations.Rotate;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Scale;
 import io.github.tkaczenko.incrementalgorithms.math.transformations.Translate;
 
@@ -34,6 +36,9 @@ public class DrawView extends View implements View.OnTouchListener {
     private double maxY;
 
     private Mode mode = Mode.NONE;
+    private double[] lastEvent;
+    private double d;
+    private double newRot;
 
     private ScaleGestureDetector mScaleDetector;
     private Point<Double> start;
@@ -47,6 +52,8 @@ public class DrawView extends View implements View.OnTouchListener {
 
     private Translate mTranslate = new Translate();
     private Scale mScale = new Scale();
+
+    private Rotate mRotate = new Rotate();
 
     private ScreenConverter mScreenConverter = new ScreenConverter();
     private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -96,7 +103,16 @@ public class DrawView extends View implements View.OnTouchListener {
                     mode = Mode.DRAG;
                     start = new Point<>(x, y);
                 }
+                lastEvent = null;
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                Toast.makeText(getContext(), "ACTION_POINTER_DOWN", Toast.LENGTH_SHORT).show();
+                lastEvent = new double[4];
+                lastEvent[0] = event.getX(0);
+                lastEvent[1] = event.getX(1);
+                lastEvent[2] = event.getY(0);
+                lastEvent[3] = event.getY(1);
+                d = rotation(event);
             case MotionEvent.ACTION_MOVE:
                 if (mode.equals(Mode.DRAG)) {
                     searchMinMaxOfAxises();
@@ -112,6 +128,14 @@ public class DrawView extends View implements View.OnTouchListener {
                         start.setY(y);
                         invalidate();
                     }
+                } else if (lastEvent != null && event.getPointerCount() == 3) {
+                    Toast.makeText(getContext(), "ACTION_ROTATE", Toast.LENGTH_SHORT).show();
+                    newRot = rotation(event);
+                    double r = newRot - d;
+                    mRotate.setRotation(r);
+                    mLetter.getTransformations().add(mRotate);
+                    mNumber.getTransformations().add(mRotate);
+                    invalidate();
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -120,6 +144,18 @@ public class DrawView extends View implements View.OnTouchListener {
         }
         mScaleDetector.onTouchEvent(event);
         return true;
+    }
+
+    public void rotate() {
+        mLetter.getTransformations().add(mRotate);
+        mNumber.getTransformations().add(mRotate);
+        invalidate();
+    }
+
+    private double rotation(MotionEvent event) {
+        double delta_x = (event.getX(0) - event.getX(1));
+        double delta_y = (event.getY(0) - event.getY(1));
+        return Math.atan2(delta_y, delta_x);
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
@@ -139,8 +175,8 @@ public class DrawView extends View implements View.OnTouchListener {
             double spanX = detector.getCurrentSpanX();
             double spanY = detector.getCurrentSpanY();
 
-            double newWidth = lastSpanX / spanX;
-            double newHeight = lastSpanY / spanY;
+            double newWidth = spanX / lastSpanX;
+            double newHeight = spanY / lastSpanY;
 
             searchMinMaxOfAxises();
 
@@ -312,6 +348,10 @@ public class DrawView extends View implements View.OnTouchListener {
 
         initLetter();
         initNumber();
+    }
+
+    public Rotate getmRotate() {
+        return mRotate;
     }
 
     public void setDrawColor(int drawColor) {
