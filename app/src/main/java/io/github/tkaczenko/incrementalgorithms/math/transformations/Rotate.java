@@ -14,28 +14,6 @@ public class Rotate extends Transformation {
         setRotationDegree(0.0);
     }
 
-    public void setRotation(double angle) {
-        this.angle = angle;
-        double sinA = Math.sin(-angle);
-        double cosA = Math.cos(-angle);
-        getTransformMatrix().set(0, 0, cosA);
-        getTransformMatrix().set(0, 1, -sinA);
-        getTransformMatrix().set(1, 0, sinA);
-        getTransformMatrix().set(1, 1, cosA);
-    }
-
-    public void setRotationDegree(double angleDegree) {
-        setRotation(angleDegree / 180.0 * Math.PI);
-    }
-
-    public Point getCenterPoint() {
-        return mCenterPoint;
-    }
-
-    public void setCenterPoint(Point centerPoint) {
-        this.mCenterPoint = centerPoint;
-    }
-
     @Override
     public Point<Double> transform(Point<Double> point) {
         if (mCenterPoint == null) {
@@ -50,11 +28,37 @@ public class Rotate extends Transformation {
         return result;
     }
 
+    public void setRotation(double angle) {
+        this.angle = angle;
+        initialize();
+    }
+
+    public void setRotationDegree(double angleDegree) {
+        setRotation(angleDegree / 180.0 * Math.PI);
+    }
+
+    public Point getCenterPoint() {
+        return mCenterPoint;
+    }
+
+    public void setCenterPoint(Point centerPoint) {
+        this.mCenterPoint = centerPoint;
+    }
+
+    private void initialize() {
+        double sinA = Math.sin(-angle);
+        double cosA = Math.cos(-angle);
+        getTransformMatrix().set(0, 0, cosA);
+        getTransformMatrix().set(0, 1, -sinA);
+        getTransformMatrix().set(1, 0, sinA);
+        getTransformMatrix().set(1, 1, cosA);
+    }
+
     public double getRotationDegree() {
         return (getRotation() / Math.PI * 180.0);
     }
 
-    public double getRotation() {
+    private double getRotation() {
         return angle;
     }
 }

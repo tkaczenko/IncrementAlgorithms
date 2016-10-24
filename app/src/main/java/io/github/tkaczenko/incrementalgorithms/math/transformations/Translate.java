@@ -6,7 +6,7 @@ package io.github.tkaczenko.incrementalgorithms.math.transformations;
 
 public class Translate extends Transformation {
     public Translate() {
-        initMatrix();
+        initialize();
     }
 
     public void setTranslationX(double x) {
@@ -25,7 +25,7 @@ public class Translate extends Transformation {
         return getTransformMatrix().get(1, 2);
     }
 
-    private void initMatrix() {
+    private void initialize() {
         Matrix matrix = getTransformMatrix();
         matrix.set(0, 0, 1.0);
         matrix.set(1, 1, 1.0);

@@ -1,4 +1,4 @@
-package io.github.tkaczenko.incrementalgorithms;
+package io.github.tkaczenko.incrementalgorithms.activities;
 
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
 import android.widget.Toast;
 
 import com.flask.colorpicker.ColorPickerView;
@@ -14,11 +13,13 @@ import com.flask.colorpicker.OnColorSelectedListener;
 import com.flask.colorpicker.builder.ColorPickerClickListener;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
+import io.github.tkaczenko.incrementalgorithms.R;
+import io.github.tkaczenko.incrementalgorithms.fragments.RotateDialogFragment;
 import io.github.tkaczenko.incrementalgorithms.graphic.Point;
 import io.github.tkaczenko.incrementalgorithms.views.DrawView;
 
 public class DrawActivity extends AppCompatActivity implements RotateDialogFragment.OnDataSend {
-    public DrawView drawView;
+    private DrawView mDrawView;
     private int mColor;
 
     @Override
@@ -26,7 +27,7 @@ public class DrawActivity extends AppCompatActivity implements RotateDialogFragm
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draw);
 
-        drawView = (DrawView) findViewById(R.id.draw_view);
+        mDrawView = (DrawView) findViewById(R.id.draw_view);
     }
 
     @Override
@@ -48,17 +49,16 @@ public class DrawActivity extends AppCompatActivity implements RotateDialogFragm
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void send(int centerX, int centerY, double angle) {
+        mDrawView.getRotate().setRotationDegree(angle);
+        mDrawView.getRotate().setCenterPoint(new Point<>((double) centerX, (double) centerY));
+        mDrawView.rotate();
+    }
+
     private void onRotate() {
         RotateDialogFragment fragment = new RotateDialogFragment();
         fragment.show(getFragmentManager(), "rotate_dialog");
-
-    }
-
-    @Override
-    public void someEvent(int centrerX, int centerY, double angle) {
-        drawView.getmRotate().setRotationDegree(angle);
-        drawView.getmRotate().setCenterPoint(new Point<Double>((double) centrerX, (double) centerY));
-        drawView.rotate();
     }
 
     private void onColorChange() {
@@ -71,15 +71,16 @@ public class DrawActivity extends AppCompatActivity implements RotateDialogFragm
                 .setOnColorSelectedListener(new OnColorSelectedListener() {
                     @Override
                     public void onColorSelected(int selectedColor) {
-                        Toast.makeText(DrawActivity.this, "onColorSelected: 0x" + Integer.toHexString(selectedColor), Toast.LENGTH_SHORT);
+                        Toast.makeText(DrawActivity.this, "onColorSelected: 0x"
+                                + Integer.toHexString(selectedColor), Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setPositiveButton("ok", new ColorPickerClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
                         mColor = selectedColor;
-                        drawView.setDrawColor(mColor);
-                        drawView.invalidate();
+                        mDrawView.setDrawColor(mColor);
+                        mDrawView.invalidate();
                     }
                 })
                 .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
@@ -90,13 +91,5 @@ public class DrawActivity extends AppCompatActivity implements RotateDialogFragm
                 })
                 .build()
                 .show();
-    }
-
-    public int getmColor() {
-        return mColor;
-    }
-
-    public void setmColor(int mColor) {
-        this.mColor = mColor;
     }
 }

@@ -19,9 +19,8 @@ public class Character {
     private static final String TAG = Character.class.getSimpleName();
 
     private List<Point<Double>> mPoints;
-    private Set<Transformation> mTransformations = new LinkedHashSet<>();
-
     private int[][] mOrders;
+    private Set<Transformation> mTransformations = new LinkedHashSet<>();
 
     private ScreenConverter mScreenConverter;
 
@@ -120,12 +119,12 @@ public class Character {
         return mPoints;
     }
 
-    public Set<Transformation> getTransformations() {
-        return mTransformations;
-    }
-
     public void setPoints(List<Point<Double>> points) {
         this.mPoints = points;
+    }
+
+    public Set<Transformation> getTransformations() {
+        return mTransformations;
     }
 
     public int[][] getOrder() {
