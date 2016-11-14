@@ -53,6 +53,7 @@ public class DrawActivity extends AppCompatActivity implements RotateDialogFragm
     public void send(int centerX, int centerY, double angle) {
         mDrawView.getRotate().setRotationDegree(angle);
         mDrawView.getRotate().setCenterPoint(new Point<>((double) centerX, (double) centerY));
+        mDrawView.isRotate = true;
         mDrawView.rotate();
     }
 

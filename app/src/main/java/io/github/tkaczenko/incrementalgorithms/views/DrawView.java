@@ -30,6 +30,7 @@ public class DrawView extends View implements View.OnTouchListener {
     private static final double DEFAULT_MIN_Y = -40.1;
     private static final double DEFAULT_MAX_Y = 40.0;
 
+    public boolean isRotate = false;
     private Mode mode = Mode.NONE;
     private double[] lastEvent;
     private double oldRot;
@@ -85,6 +86,14 @@ public class DrawView extends View implements View.OnTouchListener {
         mPaint.setStrokeWidth(mWidth);
         mLetter.draw(canvas, mPaint);
         mNumber.draw(canvas, mPaint);
+        Point<Double> center = mRotate.getCenterPoint();
+        if (isRotate) {
+            canvas.drawCircle(
+                    mScreenConverter.toScreenX(center.getX()),
+                    mScreenConverter.toScreenY(center.getY()),
+                    20, mPaint
+            );
+        }
     }
 
     @Override
@@ -95,7 +104,10 @@ public class DrawView extends View implements View.OnTouchListener {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 searchMinMaxOfAxises();
-                if (x >= minXOfCharacters && x <= maxXOfCharacters && y >= minYOfCharacters && y <= maxYOfCharacters) {
+                if (x >= minXOfCharacters &&
+                        x <= maxXOfCharacters &&
+                        y >= minYOfCharacters &&
+                        y <= maxYOfCharacters) {
                     mode = Mode.DRAG;
                     mStart = new Point<>(x, y);
                 }
