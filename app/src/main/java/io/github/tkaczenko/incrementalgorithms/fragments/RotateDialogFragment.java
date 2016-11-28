@@ -32,7 +32,7 @@ public class RotateDialogFragment extends DialogFragment
         void send(int centerX, int centerY, double angle);
     }
 
-    OnDataSend send;
+    private OnDataSend send;
 
     @Nullable
     @Override
@@ -76,7 +76,7 @@ public class RotateDialogFragment extends DialogFragment
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            send = (OnDataSend) context;
+            send = (OnDataSend) getActivity();
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
                     + " must implement onSomeListenerInterface");
